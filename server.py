@@ -15,9 +15,9 @@ import datetime
 import hashlib
 
 DRIVER = 'SQL Server'
-SERVER_NAME = 'DESKTOP-G53AD83'
+SERVER_NAME = 'YOUR-SERVER-NAME'
 DATABASE_NAME = 'CHAT_APP'
-
+# Database has already been created here
 conn_string = f"""
     Driver={{{DRIVER}}};
     Server={SERVER_NAME};
@@ -34,7 +34,7 @@ else:
     cursor = conn.cursor()
 
 app = Flask(__name__, template_folder='templates')
-app.config['SECRET_KEY'] = "4Zqp3k27j934G2J02Mi7y548Ztz9lCu8"
+app.config['SECRET_KEY'] = "YOUR_SECRET_KEY"
 socketio = SocketIO(app)
 
 
