@@ -1,0 +1,338 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Application</title>
+  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+        integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQhttp://127.0.0.1:5000ouq2+l"
+        crossorigin="anonymous">
+  <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
+  <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+  <link rel="stylesheet" href="/static/style2.css">
+
+</head>
+<body>
+<div class="modal fade" id="new_chat_window" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Chat</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h6>Start chat with:</h6>
+        <label>
+          <input class="mb-4 my-3" type="text" name="new_chat_user"
+                 placeholder="Username or email" id="new_chat_user" required>
+        </label>
+        <h6 class="text-danger"></h6>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" id="new_chat_submit_btn" class="btn btn-primary btn-dark">Start Chat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="new_contact_window" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Contact</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h6>Enter User Detail:</h6>
+        <label>
+          <input class="mb-4 my-3" type="text" name="new_chat_user"
+                 placeholder="Username or email" id="new_contact" required>
+        </label>
+        <h6 class="text-danger"></h6>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" id="new_contact_btn" class="btn btn-primary btn-dark">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="frame">
+  <div id="sidepanel">
+    <div id="profile">
+      <div class="wrap">
+        <img id="profile-img" src="/static/images/default-profile-pic.png" class="online" alt="" />
+        <p>{{user_data["name"]}}</p>
+      </div>
+    </div>
+    <!--    <div id="search">-->
+    <!--      <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>-->
+    <!--      <input type="text" placeholder="Search contacts..." />-->
+    <!--    </div>-->
+    <div id="contacts">
+
+      {% for i in recent_data %}
+      {% if i["show"] %}
+      <div class="recent-chats">
+      <a href="{{url_for('message', rid = i['room_id'])}}">
+        <ul>
+          {% if request.args.get("rid") == i['room_id'] %}
+          <li class="contact active">
+            {% else %}
+            <li class="contact">
+          {% endif %}
+            <div class="wrap">
+              <span class="contact-status {{i['is_active']}}"></span>
+              <img src="/static/images/default-profile-pic.png" alt="" />
+              <div class="meta">
+                <p class="name">{{i['messaged_user_name']}}</p>
+                <p class="preview last_msg">{{i['last_msg']}}</p>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </a>
+      </div>
+      {% endif %}
+      {% endfor %}
+
+    </div>
+    <div id="bottom-bar">
+      <button type="button" id="new_chat" data-toggle="modal" data-target="#new_chat_window"><i class="fas fa-plus-circle"></i></button>
+      <button id="addcontact" data-toggle="modal" data-target="#new_contact_window"><i class="fas fa-user-plus"></i></button>
+      <button id="settings"><i class="fas fa-user-cog"></i></button>
+      <button id="logout"> <i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+  {% if not request.args.get("rid") %}
+  <div class="content" style="display: none">
+    {% else %}
+    <div class="content">
+      {% endif %}
+      <div class="contact-profile">
+        <img src="/static/images/default-profile-pic.png" alt="" />
+        {% for data in recent_data %}
+        {% if data["room_id"] == request.args.get("rid") %}
+        <p>{{data["messaged_user_name"]}}</p>
+        {% endif %}
+        {% endfor %}
+      </div>
+      <div class="messages">
+        <ul id="msg_display">
+          {% for j in messages_data %}
+          {% if j[0]==user_data['username'] %}
+          <li class="sent">
+            <img src="/static/images/default-profile-pic.png" alt="" />
+            <p>{{ j[2]}}</p>
+          </li>
+          {% else %}
+          <li class="replies">
+            <img src="/static/images/default-profile-pic.png" alt="" />
+            <p>{{ j[2] }}</p>
+          </li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="message-input">
+        <div class="wrap">
+          <form id="chat_form">
+            <label>
+              <input type="text" id="my_msg" placeholder="Write your message..." required autocomplete="off" />
+            </label>
+            <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
+            <button class="submit" id="sendbutton" type="submit"><i class="fas fa-paper-plane"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"
+        integrity="sha512-eVL5Lb9al9FzgR63gDs1MxcDS2wFu3loYAgjIH0+Hg38tCS8Ag62dwKyH+wzDb+QauDpEZjXbMn11blw8cbTJQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript">
+
+  let scrollDown = () => {
+    $(".messages").scrollTop($(".messages")[0].scrollHeight);
+  }
+  let socket = io.connect('http://' + document.domain + ':' + location.port + '/?rid=' + '{{ room_id }}');
+  scrollDown()
+
+  socket.on('connect', function () {
+    socket.emit('join-chat', {
+      rid: '{{ room_id }}'
+    })
+  })
+
+  socket.on('joined-chat', function (msg) {
+    console.log(msg)
+  })
+
+  let data = JSON.parse('{{recent_data|tojson|safe}}');
+  let last_msg_list = document.getElementsByClassName("last_msg");
+  let recent_chat_list = document.getElementsByClassName("recent-chats");
+
+  $('#sendbutton').on('click', function (e) {
+    e.preventDefault()
+    let user_input = $('#my_msg').val()
+    if (user_input !== '') {
+      socket.emit('outgoing', {
+        timestamp: new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString().split('.')[0],
+        sender_username: "{{ user_data['username'] }}",
+        conversation: user_input,
+        rid: '{{ room_id }}'
+      })
+      $('#msg_display').append(`
+          <li class="sent">
+            <img src="/static/images/default-profile-pic.png" alt=""/>
+            <p>${user_input}</p>
+          </li>
+    `)
+      for (let i = 0; i < last_msg_list.length; i++) {
+        let rid = data[i]["room_id"]
+        if (rid === '{{request.args.get("rid")}}') {
+          last_msg_list[i].innerHTML = user_input;
+          let latest = recent_chat_list[i]
+          recent_chat_list[i].remove();
+          $("#contacts").prepend(latest);
+        }
+      }
+      $('#my_msg').val('').focus()
+      scrollDown();
+    }
+  } )
+
+  socket.on('received_msg', function (msg) {
+    $('#msg_display').append(`
+      <li class="replies">
+          <img src="/static/images/default-profile-pic.png" alt="" />
+          <p>${msg.conversation}</p>
+        </li>
+        `)
+    scrollDown();
+    for (let i=0; i<last_msg_list.length; i++ ){
+      let rid = data[i]["room_id"]
+      if (rid === '{{request.args.get("rid")}}'){
+        last_msg_list[i].innerHTML = msg.conversation;
+        let latest = recent_chat_list[i]
+        recent_chat_list[i].remove();
+        $("#contacts").prepend(latest);
+
+      }
+    }
+  })
+</script>
+<script>
+  $('#new_chat_submit_btn').on('click', function (e){
+    e.preventDefault();
+    let elt = document.getElementsByClassName("text-danger")
+    let user_input = $('#new_chat_user').val()
+    if (user_input === '{{user_data["username"]}}'){
+      elt[0].parentNode.removeChild(elt[0])
+
+      $('.modal-body').append(`<h6 class="text-danger">
+            You don't need this application to talk to yourself 🙂</h6>`)
+    }
+    else if (user_input === ''){
+      elt[0].parentNode.removeChild(elt[0])
+
+      $('.modal-body').append(`<h6 class="text-danger">
+            Enter username or email!</h6>`)
+    }
+    else {
+      let found = 0;
+      let username_list = JSON.parse('{{username_list|tojson|safe}}');
+      let email_list = JSON.parse('{{email_list|tojson|safe}}');
+      for (let i=0; i<"{{username_list}}".length; i++ ) {
+        if (user_input === username_list[i] || user_input === email_list[i]) {
+          let new_username = username_list[i];
+          $.ajax({
+            type: 'POST',
+            url: "{{ url_for('new_chat') }}",
+            data: JSON.stringify({"new_username": new_username}),
+            contentType: 'application/json',
+            dataType: "json",
+          })
+          found = 1;
+          window.location.reload();
+          break;
+        }
+      }
+      if (found === 0) {
+        elt[0].parentNode.removeChild(elt[0])
+        $('.modal-body').append(`<h6 class="text-danger">
+              User not found! 😵</h6>`);
+      }
+    }
+  })
+
+  $('#new_contact_btn').on('click', function (e){
+    e.preventDefault();
+    let elt = document.getElementsByClassName("text-danger")
+    let user_input = $('#new_contact').val()
+    if (user_input === '{{user_data["username"]}}'){
+      elt[0].parentNode.removeChild(elt[0])
+
+      $('.modal-body').append(`<h6 class="text-danger">
+            Why would you add yourself?🤔</h6>`)
+    }
+    else if (user_input === ''){
+      elt[0].parentNode.removeChild(elt[0])
+
+      $('.modal-body').append(`<h6 class="text-danger">
+            Enter username or email!</h6>`)
+    }
+    else {
+      let found = 0;
+      let username_list = JSON.parse('{{username_list|tojson|safe}}');
+      let email_list = JSON.parse('{{email_list|tojson|safe}}');
+      for (let i=0; i<"{{username_list}}".length; i++ ) {
+        if (user_input === username_list[i] || user_input === email_list[i]) {
+          let new_contact_username = username_list[i];
+          $.ajax({
+            type: 'POST',
+            url: "{{ url_for('add_new_contact') }}",
+            data: JSON.stringify({"new_contact_username": new_contact_username,
+                                  "new_contact_email": email_list[i]}),
+            contentType: 'application/json',
+            dataType: "json",
+          })
+          found = 1;
+          elt[0].parentNode.removeChild(elt[0])
+          $('.modal-body').append(`<h6 class="text-danger">
+            Contact added successfully!</h6>`)
+          break;
+        }
+      }
+      if (found === 0) {
+        elt[0].parentNode.removeChild(elt[0])
+        $('.modal-body').append(`<h6 class="text-danger">
+              User not found! 😵</h6>`);
+      }
+    }
+  })
+
+  $('#logout').on('click', function (e){
+    e.preventDefault()
+    $.getJSON('/logout',
+      function (data){
+
+      });
+    location.href = "{{ url_for('login') }}";
+  });
+</script>
+</body>
+</html>
